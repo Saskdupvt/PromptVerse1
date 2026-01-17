@@ -1,6 +1,6 @@
 import { supabase } from './supabase-config.js';
 
-// --- ලියාපදිංචි වීමේ කොටස (Sign Up) ---
+// --- 1. ලියාපදිංචි වීම (Sign Up) ---
 const registerForm = document.getElementById('registerForm');
 if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
@@ -14,20 +14,20 @@ if (registerForm) {
         });
 
         if (error) {
-            alert("Error: " + error.message);
+            alert("ලියාපදිංචි වීම අසාර්ථකයි: " + error.message);
         } else {
-            alert("Registration Successful! Please check your email (if confirmation is ON) or Login now.");
-            window.location.href = 'login.html'; // සාර්ථක නම් Login පිටුවට යවයි
+            alert("ලියාපදිංචි වීම සාර්ථකයි! කරුණාකර ඔබගේ Email එක පරීක්ෂා කරන්න.");
+            window.location.href = 'login.html';
         }
     });
 }
 
-// --- ඇතුළු වීමේ කොටස (Login) ---
+// --- 2. ඇතුළු වීම (Login) ---
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
+        const email = document.getElementById('loginEmail').value; // ID එක නිවැරදිද බලන්න
         const password = document.getElementById('loginPassword').value;
 
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -36,61 +36,66 @@ if (loginForm) {
         });
 
         if (error) {
-            alert("Login Failed: " + error.message);
+            alert("Login අසාර්ථකයි: " + error.message);
         } else {
-            alert("Login Successful!");
-            window.location.href = 'profile.html'; // සාර්ථක නම් Profile පිටුවට යවයි
+            alert("සාර්ථකව Login විය!");
+            window.location.href = 'profile.html';
         }
     });
 }
 
-// --- Profile Page එක සඳහා තොරතුරු ලබා ගැනීම ---
-
+// --- 3. පරිශීලකයා පරීක්ෂා කිරීම (Check Session) ---
 async function checkUser() {
     const { data: { user } } = await supabase.auth.getUser();
+    const currentPage = window.location.pathname;
 
     if (user) {
-        // පරිශීලකයා සිටී නම් ඔහුගේ Email එක පෙන්වන්න
+        // Profile Page එකේ ඉන්නවා නම් Email එක පෙන්වන්න
         const emailDisplay = document.getElementById('userEmail');
         if (emailDisplay) {
             emailDisplay.innerText = user.email;
         }
+        
+        // Login හෝ Register පිටුවල ඉන්නවා නම් කෙලින්ම Profile එකට යවන්න
+        if (currentPage.includes('login.html') || currentPage.includes('register.html')) {
+            window.location.href = 'profile.html';
+        }
     } else {
-        // Login වී නැත්නම් Login පිටුවට හරවා යවන්න
-        if (window.location.pathname.includes('profile.html')) {
+        // Login වී නැත්නම් සහ Profile Page එකේ ඉන්නවා නම් Login එකට හරවා යවන්න
+        if (currentPage.includes('profile.html')) {
             window.location.href = 'login.html';
         }
     }
 }
 
-// පිටුව Load වන විට පරිශීලකයා සිටීදැයි බලන්න
+// පිටුව Load වන විට පරීක්ෂා කරන්න
 checkUser();
 
-// --- Logout වීමේ කොටස ---
+// --- 4. ඉවත් වීම (Logout) ---
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
         const { error } = await supabase.auth.signOut();
         if (error) {
-            alert("Error logging out: " + error.message);
+            alert("Logout වීමේදී දෝෂයක්: " + error.message);
         } else {
-            alert("Logged out successfully!");
+            alert("Logged out!");
             window.location.href = 'login.html';
         }
     });
 }
 
+// --- 5. Prompt එකක් Database එකට ඇතුළත් කිරීම ---
 const promptForm = document.getElementById('promptForm');
-
 if (promptForm) {
     promptForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // දැනට ඉන්න පරිශීලකයා කවුදැයි බැලීම
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
-            alert("Please login first!");
+            alert("කරුණාකර පළමුව Login වන්න!");
+            window.location.href = 'login.html';
             return;
         }
 
@@ -110,10 +115,10 @@ if (promptForm) {
             ]);
 
         if (error) {
-            alert("Error: " + error.message);
+            alert("දත්ත ඇතුළත් කිරීම අසාර්ථකයි: " + error.message);
         } else {
-            alert("Prompt saved successfully!");
-            promptForm.reset(); // Form එක clear කරයි
+            alert("Prompt එක සාර්ථකව Save විය!");
+            promptForm.reset();
         }
     });
 }
