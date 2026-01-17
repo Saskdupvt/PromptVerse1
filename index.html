@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - PromptVerse</title>
-    <link rel="stylesheet" href="css/style.css">
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center h-screen">
 
@@ -21,7 +23,7 @@
                 <label class="block text-sm mb-1">Password</label>
                 <input type="password" id="password" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500" placeholder="••••••••" required>
             </div>
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300">
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300">
                 Sign Up
             </button>
         </form>
@@ -31,6 +33,48 @@
         </p>
     </div>
 
-    <script type="module" src="js/auth.js"></script>
+    <script>
+        // --- Supabase Config ---
+        const SUPABASE_URL = 'https://omflycicfddvrizdjzcf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_l-rATJ_SjrkQS-R-BamB1g_cXtPYoCl';
+        
+        // Supabase Client එක Initialize කිරීම
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const registerForm = document.getElementById('registerForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Button එක disable කිරීම (Loading state)
+            submitBtn.innerText = "Registering...";
+            submitBtn.disabled = true;
+
+            try {
+                // Supabase වෙත දත්ත යැවීම
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    alert("වැරැද්දක් සිදු විය: " + error.message);
+                } else {
+                    alert("ලියාපදිංචි වීම සාර්ථකයි! කරුණාකර ඔබගේ Email එක පරීක්ෂා කරන්න.");
+                    // Login පිටුවට යොමු කිරීම
+                    window.location.href = 'login.html'; 
+                }
+            } catch (err) {
+                alert("පද්ධතියේ දෝෂයකි. නැවත උත්සාහ කරන්න.");
+            } finally {
+                submitBtn.innerText = "Sign Up";
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
