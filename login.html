@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - PromptVerse</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center h-screen">
 
@@ -14,13 +17,13 @@
         <form id="loginForm" class="space-y-4">
             <div>
                 <label class="block text-sm mb-1">Email Address</label>
-                <input type="email" id="loginEmail" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-green-500" placeholder="name@example.com" required>
+                <input type="email" id="loginEmail" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-green-500 text-white" placeholder="name@example.com" required>
             </div>
             <div>
                 <label class="block text-sm mb-1">Password</label>
-                <input type="password" id="loginPassword" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-green-500" placeholder="••••••••" required>
+                <input type="password" id="loginPassword" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-green-500 text-white" placeholder="••••••••" required>
             </div>
-            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition duration-300">
+            <button type="submit" id="loginBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition duration-300">
                 Login
             </button>
         </form>
@@ -30,6 +33,35 @@
         </p>
     </div>
 
-    <script type="module" src="js/auth.js"></script>
-</body>
-</html>
+    <script>
+        // --- Supabase Configuration ---
+        const SUPABASE_URL = 'https://omflycicfddvrizdjzcf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_l-rATJ_SjrkQS-R-BamB1g_cXtPYoCl';
+        
+        // Supabase Client එක Initialize කිරීම
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            // Loading state එක පෙන්වීම
+            loginBtn.innerText = "Checking...";
+            loginBtn.disabled = true;
+
+            try {
+                // Supabase හරහා Login වීම
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    alert("Login වැරදියි: " + error.message);
+                } else {
+                    alert
