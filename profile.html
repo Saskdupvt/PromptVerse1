@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile - PromptVerse</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
 
@@ -14,46 +15,113 @@
     </nav>
 
     <div class="max-w-4xl mx-auto mt-10 p-6">
-        <div class="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-xl">
+        <div class="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-xl mb-6">
             <h2 class="text-3xl font-bold mb-4">User Dashboard</h2>
             <hr class="border-gray-700 mb-6">
             
             <div class="flex items-center space-x-4 mb-8">
-                <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-3xl font-bold">
+                <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-3xl font-bold" id="userInitial">
                     U
                 </div>
                 <div>
                     <p class="text-gray-400">Logged in as:</p>
-                    <h3 id="userEmail" class="text-xl font-medium">Loading...</h3>
+                    <h3 id="userEmail" class="text-xl font-medium text-blue-300">Loading...</h3>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-gray-700 p-6 rounded-xl">
-                    <h4 class="font-bold mb-2">My Saved Prompts</h4>
+                    <h4 class="font-bold mb-2 text-green-400">My Saved Prompts</h4>
                     <p class="text-gray-400 text-sm">You haven't saved any prompts yet.</p>
                 </div>
                 <div class="bg-gray-700 p-6 rounded-xl">
-                    <h4 class="font-bold mb-2">My Contributions</h4>
+                    <h4 class="font-bold mb-2 text-purple-400">My Contributions</h4>
                     <p class="text-gray-400 text-sm">Upload your first AI prompt to show it here.</p>
                 </div>
             </div>
         </div>
-    </div>
-<div class="bg-gray-800 p-6 rounded-xl mt-6">
-    <h3 class="text-xl font-bold mb-4">Upload New Prompt</h3>
-    <form id="promptForm" class="space-y-4">
-        <input type="text" id="pTitle" placeholder="Prompt Title" class="w-full p-2 rounded bg-gray-700 border border-gray-600" required>
-        <textarea id="pText" placeholder="Paste your AI Prompt here..." class="w-full p-2 rounded bg-gray-700 border border-gray-600" required></textarea>
-        <select id="pCategory" class="w-full p-2 rounded bg-gray-700 border border-gray-600">
-            <option value="ChatGPT">ChatGPT</option>
-            <option value="Midjourney">Midjourney</option>
-            <option value="Video AI">Video AI</option>
-        </select>
-        <button type="submit" class="bg-blue-600 px-6 py-2 rounded-lg font-bold">Save Prompt</button>
-    </form>
-</div>
 
-    <script type="module" src="js/auth.js"></script>
+        <div class="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-xl">
+            <h3 class="text-xl font-bold mb-4 text-blue-400">Upload New Prompt</h3>
+            <form id="promptForm" class="space-y-4">
+                <input type="text" id="pTitle" placeholder="Prompt Title (e.g. Cyberpunk Cat)" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500" required>
+                <textarea id="pText" rows="4" placeholder="Paste your AI Prompt here..." class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500" required></textarea>
+                <select id="pCategory" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500 text-gray-300">
+                    <option value="ChatGPT">ChatGPT</option>
+                    <option value="Midjourney">Midjourney</option>
+                    <option value="Video AI">Video AI</option>
+                </select>
+                <button type="submit" id="saveBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">
+                    Save Prompt to Database
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 1. Supabase Config
+        const SUPABASE_URL = 'https://omflycicfddvrizdjzcf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_l-rATJ_SjrkQS-R-BamB1g_cXtPYoCl';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 2. Check Session & Get User Info
+        async function init() {
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                // Login වී නැත්නම් කෙළින්ම Login page එකට යවන්න
+                window.location.href = 'login.html';
+            } else {
+                document.getElementById('userEmail').innerText = user.email;
+                document.getElementById('userInitial').innerText = user.email.charAt(0).toUpperCase();
+            }
+        }
+        init();
+
+        // 3. Logout Logic
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = 'login.html';
+        });
+
+        // 4. Save Prompt to Database
+        const promptForm = document.getElementById('promptForm');
+        const saveBtn = document.getElementById('saveBtn');
+
+        promptForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return alert("Login session expired!");
+
+            const title = document.getElementById('pTitle').value;
+            const text = document.getElementById('pText').value;
+            const category = document.getElementById('pCategory').value;
+
+            saveBtn.innerText = "Saving...";
+            saveBtn.disabled = true;
+
+            const { data, error } = await supabase
+                .from('prompts') // ඔබේ Supabase Table නම 'prompts' විය යුතුයි
+                .insert([
+                    { 
+                        title: title, 
+                        prompt_text: text, 
+                        category: category, 
+                        user_id: user.id 
+                    }
+                ]);
+
+            if (error) {
+                alert("දත්ත ඇතුළත් කිරීමේදී වැරැද්දක් විය: " + error.message);
+            } else {
+                alert("Prompt එක සාර්ථකව Save විය!");
+                promptForm.reset();
+            }
+
+            saveBtn.innerText = "Save Prompt to Database";
+            saveBtn.disabled = false;
+        });
+    </script>
 </body>
 </html>
